@@ -1,32 +1,45 @@
 pipeline {
- agent any
+  agent { label 'macos' }
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
+  environment {
+    DOCKER_HUB_CREDS = credentials('darinpope-docker-hub')
+    AWS_CREDS = credentials('darinpope-aws-creds')
+    KEYCHAIN_PASSWORD = credentials('darinpope-keychain')
+  }
   stages {
-    stage('Scan') {
+    stage('Tooling versions') {
       steps {
-        withSonarQubeEnv(installationName: 'sq1') { 
-          sh './mvnw clean org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar'
-        }
+        sh '''
+          docker --version
+          docker compose version
+        '''
       }
     }
-    stage("Quality Gate") {
+    stage('Unlock keychain') {
       steps {
-        timeout(time: 2, unit: 'MINUTES') {
-          waitForQualityGate abortPipeline: true
-        }
+        sh 'security -v unlock-keychain -p $KEYCHAIN_PASSWORD ~/Library/Keychains/login.keychain-db'
+      }
+    }
+    stage('Build') {
+      steps {
+        sh 'docker context use default'
+        sh 'docker compose build'
+        sh 'docker compose push'
+      }
+    }
+    stage('Deploy') {
+      steps {
+        sh 'docker context use myecscontext'
+        sh 'docker compose up'
+        sh 'docker compose ps --format json'
       }
     }
   }
+  post {
+    always {
+        sh 'security -v lock-keychain ~/Library/Keychains/login.keychain-db'
+    }
+  }
 }
-
-stage("Quality Gate"){
-          timeout(time: 1, unit: 'HOURS') {
-              def qg = waitForQualityGate()
-              if (qg.status != 'OK') {
-                  slackSend channel: '#general', color: 'danger', message: 'Pipeline aborted due to quality gate failure'
-                  error "Pipeline aborted due to quality gate failure: ${qg.status}"
-              }
-          }
-      }
