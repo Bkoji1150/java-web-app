@@ -1,9 +1,9 @@
 pipeline {
-   tools {
+  agent { label 'docker' }
+  tools {
         maven 'mvn'
         jdk   'jdk'
     }
-  agent { label 'docker' }
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
