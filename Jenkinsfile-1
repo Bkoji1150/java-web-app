@@ -7,6 +7,7 @@ pipeline {
     stage('Scan') {
       steps {
         withSonarQubeEnv(installationName: 'sonar-server') { 
+        sh 'sudo source /root/.bash_profile'
          sh 'mvn -U clean install sonar:sonar'
         }
       }
