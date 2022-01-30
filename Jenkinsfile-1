@@ -7,7 +7,7 @@ pipeline {
     stage('Scan') {
       steps {
         withSonarQubeEnv(installationName: 'sonar-server') { 
-        sh 'whoami'
+        sh 'mvn --version && terraform --version'
          sh 'mvn -U clean install sonar:sonar'
         }
       }
