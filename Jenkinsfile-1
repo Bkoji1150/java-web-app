@@ -7,6 +7,7 @@ pipeline {
     stage('Scan') {
       steps {
        sh 'terraform -version'
+       sh 'mvn --version /home/agent/jenkinsagent/workspace/'
       }
     }
   }
