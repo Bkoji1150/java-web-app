@@ -7,12 +7,28 @@ pipeline {
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
-  stages {
-    stage('Scan') {
-      steps {
-       sh 'terraform -version'
-       sh 'mvn --version'
-      }
-    }
-  }
+ stages {
+       stage ('Cloning git & Build') {
+          steps {
+                checkout scm
+            }
+        }
+         stage('Compile') {
+            steps {
+                sh 'mvn clean package -DskipTests=true'
+            }
+        }
+         stage('Unit Tests Execution') {
+            steps {
+                sh 'mvn surefire:test'
+            }
+        }
+         stage("Static Code analysis With SonarQube") {
+            agent any                                               
+            steps {
+              withSonarQubeEnv(installationName: 'sonar') {
+                sh  './mvnw clean org.sonarsource.scanner.maven:sonar-maven-plugin:3.9.0.2155:sonar'
+              }
+            }
+          }
 }
