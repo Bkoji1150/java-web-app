@@ -1,9 +1,18 @@
 pipeline {
- agent any
+  agent { label 'docker' }
+  tools {
+        maven 'mvn'
+        jdk   'jdk'
+    }
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   }
   stages {
+     stage ('Cloning git & Build') {
+          steps {
+                checkout scm
+            }
+        }
     stage('Scan') {
       steps {
         withSonarQubeEnv(installationName: 'sq1') { 
@@ -11,7 +20,7 @@ pipeline {
         }
       }
     }
-    stage("Quality Gate") {
+     stage("Static Code analysis With sonar") {
       steps {
         timeout(time: 2, unit: 'MINUTES') {
           waitForQualityGate abortPipeline: true
@@ -25,7 +34,7 @@ stage("Quality Gate"){
           timeout(time: 1, unit: 'HOURS') {
               def qg = waitForQualityGate()
               if (qg.status != 'OK') {
-                  slackSend channel: '#general', color: 'danger', message: 'Pipeline aborted due to quality gate failure'
+                 slackSend channel: '#jenkins_notification', color: 'danger', message: 'Pipeline aborted due to quality gate failure', teamDomain: 'jenkins-training', tokenCredentialId: 'SlackToken'
                   error "Pipeline aborted due to quality gate failure: ${qg.status}"
               }
           }
