@@ -13,17 +13,7 @@ pipeline {
                 checkout scm
             }
         }
-         stage('Compile') {
-            steps {
-                sh 'mvn clean package -DskipTests=true'
-            }
-        }
-         stage('Unit Tests Execution') {
-            steps {
-                sh 'mvn surefire:test'
-            }
-        }
-         stage("Static Code analysis With SonarQube") {
+         stage("Static Code analysis With sonar") {
             agent any                                               
             steps {
               withSonarQubeEnv(installationName: 'sonar') {
