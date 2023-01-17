@@ -15,6 +15,6 @@ public class DemoApplication {
 
 	@RequestMapping("/")
   public String home() {
-    return "Hello Docker World!";
+    return "Hello Kojitechs Family, welcome to our first ci-cd app!";
   }
 }
